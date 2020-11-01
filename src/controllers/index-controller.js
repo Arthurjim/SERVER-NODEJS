@@ -5,7 +5,12 @@ const pool = new Pool({
   host: process.env.HOST,
   user: process.env.USER_DB,
   password: process.env.PASSWORD_BD,
-  database: process.env.
+  database: process.env.NAME_DB,
+  ssl: {
+    require: true,
+    
+    rejectUnauthorized: false,
+  },
 })
 
 const getUsers = async (req, res) =>{
@@ -15,12 +20,14 @@ const getUsers = async (req, res) =>{
 }
 const addUsers = async (req, res ) => {
   const {name, lastname, fechaini, fehcavenci} = req.body;
+  console.log(req.body)
  try {
   const response = await pool.query('INSERT INTO users (name, lastname, fechaini, fehcavenci) VALUES($1, $2, $3, $4)', [name,lastname, fechaini,fehcavenci ])
   res.json(response.rows);
   console.log('Se ha insertado nuevo usuario')
  } catch (error) {
-   console.log('Datos erroneos')
+   console.log(error)
+   res.end();
  }
   
 }
@@ -53,14 +60,16 @@ const getListDate = async (req,res) =>{
   }
 }
 const addListDate = async (req, res) => {
-  const { id_users, day } = req.body;
+  const { id_usuario, day } = req.body;
+  console.log(req.body)
   try {
-    const response = await pool.query("INSERT INTO calendario (id_usuario, day) VALUES($1, $2)", [id_users, day]);
+    const response = await pool.query('INSERT INTO calendario (id_usuario, day) VALUES($1, $2)', [id_usuario, day]);
     res.json(response.rows);
     console.log('Se ha insertado usuario a calendario')
+  
   } catch (error) {
     console.log('No existe dicho id')
-    return
+    res.end();
   }
  
 }
@@ -73,7 +82,7 @@ const oneDelete = async (req, res) => {
      console.log(`usuario elminado con id ${id}`)
   } catch (error) {
     console.log('No se pudo eliminar')
-    return null;
+    res.end();
   }
 }
 const updateUser = async (req, res) =>{
@@ -107,12 +116,12 @@ const register = async (req,res) =>{
   }
   if(password.length < 6){
     console.log('contraseña corta')
-    return null;
+    res.end();
    
   }
   if(password !== password2){
     console.log('contraseña diferente')
-    return null;
+    res.end();
     
   }
   if(errors.length >0 ){
@@ -124,10 +133,10 @@ const register = async (req,res) =>{
       pool.query(
         `SELECT * FROM administradores WHERE email = $1`,[email], (err, results) =>{
           if(err){
-           return 0;
+            res.end();
             
           }
-          console.log(results.rows)
+          res.json(response.rows)
           if(results.rows.length > 0){
            console.log(err)
           }else{
@@ -139,7 +148,7 @@ const register = async (req,res) =>{
                   console.log("hay un error en el registro")
                 }
                 res.json(results.rows);
-                
+                res.json(response.rows);
                 
               }
             )
